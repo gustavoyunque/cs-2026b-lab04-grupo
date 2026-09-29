@@ -1,0 +1,37 @@
+# Reto opcional: regenera automáticamente los PNG de los diagramas Mermaid en cada push
+name: Regenerar diagramas Mermaid
+
+on:
+  push:
+    paths:
+      - "docs/architecture/diagramas/**.mmd"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Instalar mermaid-cli
+        run: npm install -g @mermaid-js/mermaid-cli
+      - name: Renderizar cada .mmd a PNG
+        run: |
+          echo '{"args":["--no-sandbox"]}' > puppeteer.json
+          for f in docs/architecture/diagramas/*.mmd; do
+            name=$(basename "$f" .mmd)
+            mmdc -p puppeteer.json -i "$f" -o "docs/architecture/diagramas/img/$name.png" -s 2 -b white
+          done
+          rm puppeteer.json
+      - name: Subir las imágenes regeneradas
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/architecture/diagramas/img/*.png
+          git diff --cached --quiet || git commit -m "ci: regenerar diagramas Mermaid"
+          git push
