@@ -1,0 +1,34 @@
+flowchart TB
+    CL["Cliente"]
+    CO["Comerciante"]
+    RE["Repartidor"]
+    subgraph APP["San Camilo en Línea — Monolito modular (un solo despliegue en Node.js)"]
+        PWA["Capa de presentación: PWA React + API REST (Express)"]
+        subgraph MOD["Módulos de dominio (se comunican solo por interfaces públicas)"]
+            M1["Catálogo y puestos<br/>RF-01, RF-02, RF-07"]
+            M2["Pedidos y carrito<br/>RF-03"]
+            M3["Pagos<br/>RF-04"]
+            M4["Notificaciones<br/>RF-05"]
+            M5["Reparto<br/>RF-06"]
+        end
+        INF["Capa de infraestructura: repositorios, cola de reintentos (pg-boss) y adaptadores externos"]
+    end
+    DB[("PostgreSQL<br/>(un esquema por módulo)")]
+    ST[("Almacenamiento de fotos<br/>(disco del VPS, WebP)")]
+    CQ["Culqi — cobro con Yape"]
+    WA["WhatsApp Business Cloud API"]
+    CL & CO & RE --> PWA
+    PWA --> M1 & M2 & M5
+    M2 --> M3
+    M2 --> M4
+    M1 & M2 & M3 & M4 & M5 --> INF
+    INF --> DB
+    INF --> ST
+    INF --> CQ
+    INF --> WA
+    classDef mod fill:#E8F5E9,stroke:#2E7D32,color:#000
+    classDef ext fill:#F2F2F2,stroke:#7F7F7F,color:#000,stroke-dasharray: 4 3
+    classDef usr fill:#FDEDEC,stroke:#C8310E,color:#000
+    class M1,M2,M3,M4,M5 mod
+    class CQ,WA ext
+    class CL,CO,RE usr
