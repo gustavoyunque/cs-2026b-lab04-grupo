@@ -1,0 +1,31 @@
+@startuml
+skinparam dpi 200
+skinparam componentStyle rectangle
+skinparam defaultFontName Arial
+skinparam backgroundColor white
+title Alternativa A (descartada): San Camilo en Línea como monolito en capas
+actor "Cliente / Comerciante / Repartidor" as U
+node "VPS (un solo despliegue)" {
+  package "Aplicación Node.js / Express" {
+    [Capa de rutas y controladores\n(todas las funcionalidades)] as C
+    [Capa de servicios\n(lógica de catálogo, pedidos,\npagos y notificaciones mezclada)] as S
+    [Capa de acceso a datos\n(repositorios compartidos)] as R
+  }
+  database "PostgreSQL\n(un solo esquema)" as DB
+}
+cloud "Culqi (Yape)" as Y
+cloud "WhatsApp Cloud API" as W
+U --> C
+C --> S
+S --> R
+R --> DB
+S --> Y
+S --> W
+note right of S
+  Puntaje en la matriz: 4,05 (2.º lugar, frente a 4,20).
+  Es la opción más rápida de construir, pero la lógica
+  de pagos y notificaciones queda mezclada en la capa de servicios:
+  si WhatsApp falla, el flujo del pedido falla (QA-02)
+  y agregar Plin obliga a tocar código de otros dominios.
+end note
+@enduml
