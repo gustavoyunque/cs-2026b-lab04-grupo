@@ -1,0 +1,15 @@
+stateDiagram-v2
+    [*] --> RECIBIDO : recibir() [pago aprobado]
+    RECIBIDO --> LISTO : marcarListo() [todos los productos disponibles]
+    RECIBIDO --> RECHAZADO : rechazar() [producto agotado]
+    RECIBIDO --> RECHAZADO : rechazar() [15 min sin respuesta]
+    LISTO --> RECOGIDO : registrarRecojo() [repartidor o cliente en el puesto]
+    RECOGIDO --> ENTREGADO : confirmarEntrega()
+    ENTREGADO --> [*]
+    RECHAZADO --> [*]
+    note right of RECIBIDO
+        Al entrar: aviso por WhatsApp al comerciante
+    end note
+    note right of RECHAZADO
+        Al entrar: reembolso del subtotal del puesto
+    end note
