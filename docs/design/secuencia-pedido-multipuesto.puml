@@ -1,0 +1,51 @@
+@startuml secuencia-pedido-multipuesto
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam sequenceMessageAlign center
+title HU-03: pedido a varios puestos con pago único
+autonumber
+actor Cliente
+participant "PWA" as UI
+participant "PedidoController" as C
+participant "ServicioPedidos" as S
+participant "RepositorioPedidos" as R
+participant "Pedido" as P
+participant "Producto" as PR
+participant "PasarelaPago\n(CulqiYapeAdapter)" as G
+participant "Notificador\n(WhatsAppAdapter)" as N
+
+Cliente -> UI : Confirmar y pagar con Yape
+UI -> C : POST /pedidos/{id}/pago
+C -> S : confirmarYPagar(id, tokenYape)
+S -> R : buscar(id)
+R --> S : pedido
+S -> P : confirmar()
+loop por cada línea del pedido
+  P -> PR : reservar(cantidad)
+end
+S -> P : calcularTotal()
+P --> S : total
+S -> G : cobrar(total, tokenYape)
+alt pago aprobado
+  G --> S : pago aprobado
+  S -> P : registrarPago(pago)
+  note right of P : crea un PedidoPuesto\nRECIBIDO por cada puesto
+  S -> R : guardar(pedido)
+  loop por cada PedidoPuesto
+    S ->> N : notificarPedidoRecibido(aviso)
+  end
+  note right of N : asíncrono con cola pg-boss\nno bloquea la respuesta
+  S --> C : pedido PAGADO
+  C --> UI : 200 OK
+else pago rechazado
+  G --> S : pago rechazado
+  S -> P : cancelar("pago rechazado")
+  loop por cada línea del pedido
+    P -> PR : liberar(cantidad)
+  end
+  S -> R : guardar(pedido)
+  S --> C : pedido CANCELADO
+  C --> UI : 402 Pago rechazado
+end
+UI --> Cliente : Muestra el resultado
+@enduml
