@@ -1,10 +1,11 @@
 # San Camilo en Línea — Laboratorio 04: Fundamentos de arquitectura de software
-Construcción de Software · EPIS-UNSA · 2026-B · Trabajo individual
+Construcción de Software · EPIS-UNSA · 2026-B · Trabajo grupal
 
 ## Integrantes
 | Nombre | Rol en el laboratorio |
 |--------|-----------------------|
 | Gustavo Alonso Yunque Quispe (CUI 20220597) | Arquitecto, diagramador, redactor de ADR y verificador de IA |
+| Giovani Angel Mendoza Contreras (CUI 20192123) | Revisor de diseño y de consistencia entre diagramas |
 
 ## Caso
 **N.º 7 — San Camilo en Línea.** Plataforma para hacer pedidos a los puestos del Mercado San Camilo de Arequipa, con recojo o delivery. Los comerciantes publican sus productos desde el celular, los clientes arman un solo pedido con productos de varios puestos y pagan con Yape, el comerciante recibe la confirmación por WhatsApp y un repartidor recoge y entrega.
@@ -79,3 +80,40 @@ pip install diagrams matplotlib && python despliegue.py && python matriz.py     
 
 ## Reflexión sobre el uso de la IA
 La IA (Claude) aceleró mucho el trabajo: propuso alternativas razonables, escribió el código de los tres diagramas y redactó borradores de ADR en minutos. Pero no fue una autoridad: cometió un error aritmético en la matriz (4,00 en lugar de 4,05) que solo se detectó al recalcular con un script, y propuso Redis como cola sin considerar que agrega un servicio más para una sola persona. La crítica adversarial fue lo más útil, porque obligó a la misma IA a buscar los puntos débiles de su recomendación. También aprendimos a verificar en la documentación oficial las afirmaciones sobre servicios externos, como el cobro con Yape a través de Culqi. La regla "la IA propone, el equipo decide y verifica" se cumplió en cada entrada de la bitácora.
+
+## Diseño UML (Lab 05)
+
+Diseño detallado de los módulos Pedidos y Pagos para la historia **HU-03: pedido a varios puestos con pago único**. Todos los diagramas están escritos como código en `docs/design/`.
+
+### Máquina de estados de PedidoPuesto
+```mermaid
+stateDiagram-v2
+    [*] --> RECIBIDO : recibir() [pago aprobado]
+    RECIBIDO --> LISTO : marcarListo() [todos los productos disponibles]
+    RECIBIDO --> RECHAZADO : rechazar() [producto agotado]
+    RECIBIDO --> RECHAZADO : rechazar() [15 min sin respuesta]
+    LISTO --> RECOGIDO : registrarRecojo() [repartidor o cliente en el puesto]
+    RECOGIDO --> ENTREGADO : confirmarEntrega()
+    ENTREGADO --> [*]
+    RECHAZADO --> [*]
+```
+
+### Entregables
+| Código | Archivo | Imagen |
+|--------|---------|--------|
+| E1 | [historia.md](docs/design/historia.md) y [clases.puml](docs/design/clases.puml) | [clases-pedidos.png](docs/design/img/clases-pedidos.png) |
+| E2 | [secuencia-pedido-multipuesto.puml](docs/design/secuencia-pedido-multipuesto.puml) | [secuencia-pedido-multipuesto.png](docs/design/img/secuencia-pedido-multipuesto.png) |
+| E3 | [estados-pedido-puesto.mmd](docs/design/estados-pedido-puesto.mmd) | [estados-pedido-puesto.png](docs/design/img/estados-pedido-puesto.png) |
+| E4 | [actividades-consolidar-pedido.puml](docs/design/actividades-consolidar-pedido.puml) | [actividades-consolidar-pedido.png](docs/design/img/actividades-consolidar-pedido.png) |
+| E5 | [paquetes.puml](docs/design/paquetes.puml) | [paquetes.png](docs/design/img/paquetes.png) |
+| E6 | [src/pedidos/dominio.py](src/pedidos/dominio.py) y [round-trip.md](docs/design/round-trip.md) | [classes_pedidos.png](docs/design/img/classes_pedidos.png) |
+| E7 | [consistencia.md](docs/design/consistencia.md) y [bitacora-ia.md](docs/design/bitacora-ia.md) | |
+
+### Diagrama de clases
+![Diagrama de clases](docs/design/img/clases-pedidos.png)
+
+### Diagrama de secuencia
+![Diagrama de secuencia](docs/design/img/secuencia-pedido-multipuesto.png)
+
+### Decisión nueva
+- [ADR-004: DTO compartido para romper el ciclo pedidos–notificaciones](docs/architecture/adr/004-dto-compartido-para-notificaciones.md)
