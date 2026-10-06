@@ -1,0 +1,43 @@
+@startuml actividades-consolidar-pedido
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam ActivityBackgroundColor #EAF4EC
+skinparam ActivityBorderColor #2E7D32
+title Preparación y consolidación de un pedido multipuesto
+|Sistema|
+start
+:Registra el pago y divide\nel pedido por puesto;
+fork
+  :Avisa a cada comerciante\npor WhatsApp;
+fork again
+  :Envía el comprobante\nal cliente;
+end fork
+|Comerciante|
+:Revisa su parte del pedido;
+if (¿Tiene todos los productos?) then (sí)
+  :Prepara los productos\ny marca "Listo";
+else (no)
+  :Rechaza su parte;
+  |Sistema|
+  :Reembolsa el subtotal\nde ese puesto;
+endif
+|Sistema|
+if (¿Quedó al menos un puesto listo?) then (sí)
+  if (¿Tipo de entrega?) then (delivery)
+    |Repartidor|
+    :Recoge en cada puesto listo;
+    :Consolida todo en un solo paquete;
+    :Entrega al cliente;
+  else (recojo)
+    |Cliente|
+    :Recoge en cada puesto listo\nmostrando su código;
+  endif
+  |Cliente|
+  :Confirma la recepción;
+  stop
+else (no)
+  |Sistema|
+  :Cancela el pedido y avisa al cliente;
+  stop
+endif
+@enduml
