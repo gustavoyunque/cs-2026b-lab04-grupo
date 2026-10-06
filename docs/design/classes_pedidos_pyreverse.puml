@@ -1,0 +1,112 @@
+@startuml classes_pedidos
+set namespaceSeparator none
+class "AvisoPedido" as pedidos.dominio.AvisoPedido {
+  celular : str
+  puesto : str
+  resumen : str
+}
+class "Cliente" as pedidos.dominio.Cliente {
+  celular : str
+  id : UUID
+  nombre : str
+}
+class "CulqiYapeAdapter" as pedidos.dominio.CulqiYapeAdapter {
+  {abstract}cobrar(monto: Decimal, token_yape: str) -> Pago
+  {abstract}reembolsar(codigo_operacion: str, monto: Decimal) -> None
+}
+class "EstadoPedido" as pedidos.dominio.EstadoPedido {
+  name
+}
+class "EstadoPedidoPuesto" as pedidos.dominio.EstadoPedidoPuesto {
+  name
+}
+class "LineaPedido" as pedidos.dominio.LineaPedido {
+  cantidad : int
+  precio_unitario : Decimal
+  producto
+  subtotal() -> Decimal
+}
+class "Notificador" as pedidos.dominio.Notificador {
+  {abstract}notificar_pedido_recibido(aviso: AvisoPedido) -> None
+}
+class "Pago" as pedidos.dominio.Pago {
+  aprobado : bool
+  codigo_operacion : str
+  id : UUID
+  monto : Decimal
+}
+class "PasarelaPago" as pedidos.dominio.PasarelaPago {
+  {abstract}cobrar(monto: Decimal, token_yape: str) -> Pago
+  {abstract}reembolsar(codigo_operacion: str, monto: Decimal) -> None
+}
+class "Pedido" as pedidos.dominio.Pedido {
+  cliente
+  estado
+  fecha : datetime
+  id : UUID
+  lineas : list[LineaPedido]
+  pago : Pago | None
+  pedidos_puesto : list[PedidoPuesto]
+  tipo_entrega
+  agregar_producto(producto: Producto, cantidad: int) -> None
+  calcular_total() -> Decimal
+  cancelar(motivo: str) -> None
+  confirmar() -> None
+  registrar_pago(pago: Pago) -> None
+}
+class "PedidoPuesto" as pedidos.dominio.PedidoPuesto {
+  estado : EstadoPedidoPuesto | None
+  id : UUID
+  lineas : list[LineaPedido]
+  puesto
+  confirmar_entrega() -> None
+  marcar_listo() -> None
+  rechazar(motivo: str) -> None
+  recibir() -> None
+  registrar_recojo() -> None
+  subtotal() -> Decimal
+}
+class "Producto" as pedidos.dominio.Producto {
+  id : UUID
+  nombre : str
+  precio : Decimal
+  puesto
+  stock : int
+  liberar(cantidad: int) -> None
+  reservar(cantidad: int) -> None
+}
+class "Puesto" as pedidos.dominio.Puesto {
+  celular_comerciante : str
+  id : UUID
+  nombre : str
+  rubro : str
+}
+class "RepositorioPedidos" as pedidos.dominio.RepositorioPedidos {
+  {abstract}buscar(id: UUID) -> Pedido
+  {abstract}guardar(pedido: Pedido) -> None
+}
+class "ServicioPedidos" as pedidos.dominio.ServicioPedidos {
+  notificador
+  pasarela
+  repositorio
+  confirmar_y_pagar(pedido_id: UUID, token_yape: str) -> Pedido
+  rechazar_pedido_puesto(pedido_id: UUID, pedido_puesto_id: UUID, motivo: str) -> None
+}
+class "TipoEntrega" as pedidos.dominio.TipoEntrega {
+  name
+}
+class "WhatsAppAdapter" as pedidos.dominio.WhatsAppAdapter {
+  {abstract}notificar_pedido_recibido(aviso: AvisoPedido) -> None
+}
+pedidos.dominio.CulqiYapeAdapter --|> pedidos.dominio.PasarelaPago
+pedidos.dominio.WhatsAppAdapter --|> pedidos.dominio.Notificador
+pedidos.dominio.Pedido --> pedidos.dominio.Cliente : cliente
+pedidos.dominio.Pedido --> pedidos.dominio.EstadoPedido : estado
+pedidos.dominio.LineaPedido --> pedidos.dominio.Producto : producto
+pedidos.dominio.PedidoPuesto --> pedidos.dominio.Puesto : puesto
+pedidos.dominio.Producto --> pedidos.dominio.Puesto : puesto
+pedidos.dominio.Pedido --> pedidos.dominio.TipoEntrega : tipo_entrega
+pedidos.dominio.Notificador --o pedidos.dominio.ServicioPedidos : notificador
+pedidos.dominio.PasarelaPago --o pedidos.dominio.ServicioPedidos : pasarela
+pedidos.dominio.RepositorioPedidos --o pedidos.dominio.ServicioPedidos : repositorio
+@enduml
