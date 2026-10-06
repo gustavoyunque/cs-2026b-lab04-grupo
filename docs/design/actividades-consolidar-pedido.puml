@@ -26,6 +26,13 @@ if (¿Quedó al menos un puesto listo?) then (sí)
   if (¿Tipo de entrega?) then (delivery)
     |Repartidor|
     :Recoge en cada puesto listo;
+    :Verifica los productos\ncontra el pedido;
+    if (¿Está completo?) then (sí)
+    else (no)
+      |Comerciante|
+      :Completa lo que falta;
+      |Repartidor|
+    endif
     :Consolida todo en un solo paquete;
     :Entrega al cliente;
   else (recojo)

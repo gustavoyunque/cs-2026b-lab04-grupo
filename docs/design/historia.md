@@ -15,3 +15,7 @@ Se relaciona con los requisitos RF-03, RF-04 y RF-05 y con el escenario QA-02 de
 ## Alcance del diseño
 
 Se diseña el interior de los módulos **Pedidos** y **Pagos** del monolito modular del ADR-001. Catálogo, Notificaciones y Reparto solo aparecen por las clases o puertos que Pedidos necesita de ellos.
+
+## Validación del diagrama de actividades
+
+Gustavo Yunque revisó el diagrama `actividades-consolidar-pedido.puml` actuando como repartidor y dio el flujo por correcto. De esa revisión se acordó un cambio: antes de salir de cada puesto, el repartidor verifica los productos contra el pedido y, si falta algo, el comerciante lo completa en el momento. Así se evita llegar donde el cliente con un pedido incompleto.
