@@ -1,0 +1,120 @@
+@startuml clases-pedidos
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classBackgroundColor #EAF4EC
+skinparam classBorderColor #2E7D32
+skinparam nodesep 30
+skinparam ranksep 45
+title San Camilo en Línea — Módulos Pedidos y Pagos (diseño)
+
+class Cliente {
+  - id: UUID
+  - nombre: String
+  - celular: String
+}
+class Puesto {
+  - id: UUID
+  - nombre: String
+  - rubro: String
+  - celularComerciante: String
+}
+class Producto {
+  - id: UUID
+  - nombre: String
+  - precio: Decimal
+  - stock: int
+  + reservar(cantidad: int): void
+  + liberar(cantidad: int): void
+}
+class Pedido {
+  - id: UUID
+  - fecha: DateTime
+  - tipoEntrega: TipoEntrega
+  - estado: EstadoPedido
+  + agregarProducto(producto: Producto, cantidad: int): void
+  + calcularTotal(): Decimal
+  + confirmar(): void
+  + registrarPago(pago: Pago): void
+  + cancelar(motivo: String): void
+}
+class LineaPedido {
+  - cantidad: int
+  - precioUnitario: Decimal
+  + subtotal(): Decimal
+}
+class PedidoPuesto {
+  - id: UUID
+  - estado: EstadoPedidoPuesto
+  + recibir(): void
+  + subtotal(): Decimal
+  + marcarListo(): void
+  + rechazar(motivo: String): void
+  + registrarRecojo(): void
+  + confirmarEntrega(): void
+}
+enum EstadoPedido {
+  BORRADOR
+  CONFIRMADO
+  PAGADO
+  CANCELADO
+}
+enum EstadoPedidoPuesto {
+  RECIBIDO
+  LISTO
+  RECOGIDO
+  ENTREGADO
+  RECHAZADO
+}
+enum TipoEntrega {
+  RECOJO
+  DELIVERY
+}
+class Pago {
+  - id: UUID
+  - monto: Decimal
+  - codigoOperacion: String
+  - aprobado: bool
+}
+class AvisoPedido <<dto>> {
+  - celular: String
+  - puesto: String
+  - resumen: String
+}
+interface PasarelaPago <<puerto>> {
+  + cobrar(monto: Decimal, tokenYape: String): Pago
+  + reembolsar(codigoOperacion: String, monto: Decimal): void
+}
+class CulqiYapeAdapter <<adaptador>>
+interface Notificador <<puerto>> {
+  + notificarPedidoRecibido(aviso: AvisoPedido): void
+}
+class WhatsAppAdapter <<adaptador>>
+interface RepositorioPedidos <<puerto>> {
+  + buscar(id: UUID): Pedido
+  + guardar(pedido: Pedido): void
+}
+class ServicioPedidos <<servicio>> {
+  + confirmarYPagar(pedidoId: UUID, tokenYape: String): Pedido
+  + rechazarPedidoPuesto(pedidoId: UUID, pedidoPuestoId: UUID, motivo: String): void
+}
+
+Cliente "1" -- "0..*" Pedido : realiza >
+Pedido "1" *-- "1..*" LineaPedido : contiene
+Pedido "1" *-- "0..*" PedidoPuesto : se divide en
+PedidoPuesto "1" o-- "1..*" LineaPedido : agrupa
+PedidoPuesto "0..*" --> "1" Puesto : atiende
+LineaPedido "0..*" --> "1" Producto
+Puesto "1" -- "0..*" Producto : ofrece >
+Pedido "1" -- "0..1" Pago
+Pedido --> EstadoPedido
+Pedido --> TipoEntrega
+PedidoPuesto --> EstadoPedidoPuesto
+PasarelaPago <|.. CulqiYapeAdapter
+Notificador <|.. WhatsAppAdapter
+Notificador ..> AvisoPedido
+ServicioPedidos ..> Pedido
+ServicioPedidos ..> RepositorioPedidos
+ServicioPedidos ..> PasarelaPago
+ServicioPedidos ..> Notificador
+@enduml
