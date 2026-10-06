@@ -1,0 +1,29 @@
+@startuml paquetes
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam packageStyle rectangle
+title San Camilo en Línea — Paquetes del monolito modular
+package "sancamilo" {
+  package catalogo
+  package pedidos
+  package pagos
+  package notificaciones
+  package reparto
+  package compartido
+}
+pedidos ..> catalogo : usa Producto y Puesto
+pedidos ..> pagos : usa PasarelaPago\n(puerto) y Pago
+pedidos ..> notificaciones : usa Notificador\n(puerto)
+reparto ..> pedidos : consulta PedidoPuesto
+pedidos ..> compartido : usa AvisoPedido
+notificaciones ..> compartido : usa AvisoPedido
+catalogo ..> compartido
+pagos ..> compartido
+reparto ..> compartido
+note bottom of notificaciones
+  Regla de dependencias (ADR-001 y ADR-004):
+  sin ciclos entre paquetes.
+  pagos y notificaciones NO dependen de pedidos.
+  compartido no depende de nadie.
+end note
+@enduml
